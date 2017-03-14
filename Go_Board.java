@@ -116,9 +116,23 @@ public class Go_Board{
 		return ret;
 	}
 
+	public Boolean is_valid_move(String move){
+		if(move.length() > 2) return false;
+		if(Character.isLetter(move.charAt(0)) == false) return false;
+		if(Character.isDigit(move.charAt(1)) == false) return false;
+		return true;
+	}
+
+	public Boolean does_move_exist(Go_Board board, int i , int j){
+		int[][] b = board.get_elements();
+		if( b[i-1][j-1] == 0) return false;
+		return true;
+	}
+
 	public static void print_board(Go_Board board){
 		int[][] b = board.get_elements();
 		String row_letter;
+		String print_let =  "";
 		int val;
 		System.out.print(" ");
 		for(int i = 0; i < board.get_size(); i++){
@@ -153,7 +167,10 @@ public class Go_Board{
 					System.out.print("___|");
 				}
 				else{
-					System.out.print("_"+b[i][j]+ "_|" );
+					if(b[i][j] == 1) print_let = "D";
+					if(b[i][j] == 2) print_let = "L";
+					if(b[i][j] == 0) print_let = "0";
+					System.out.print("_"+ print_let + "_|" );
 				}
 			}
 			System.out.println();
@@ -169,27 +186,28 @@ public class Go_Board{
 	}
 
 	// Returns a heuristic value of a board based on the BEST number of connecting pieces a player has
-	// 5 pieces in a row = 10^5
-	// 4 pieces in a row = 10^4
-	// 3 pieces in a row = 10^3
-	// 2 pieces in a row = 10^2
-	// 1 piece in a row = 10^1
 	public int value_of_board(Go_Board board, int player){
-		int val = 0; //ret val
-		int final_connecting_pieces = 0;
+		int val = 0;
+		int max_connecting_pieces = 0;
 		int tmp_connecting_pieces = 0;
+
+		// Total number of connected pieces ...
+		// ... used to multiply final heuristic value by h_val *= (num_x_piece) * x
+		int num_one_piece = 0;
+		int num_two_piece = 0;
+		int num_three_piece = 0;
+		int num_four_piece = 0;
+
 		int[][] b = board.get_elements();
 		Boolean winning = false;
 		for(int i = 0; i < board.size; i++){
 			for(int j = 0; j < board.size; j++){
+				tmp_connecting_pieces = 0; // reset
 				// check if board is winning board, if so, return max val
 				winning = board.is_winning_board(board, player);
 				if(winning == true) return val = 100000;
-				// check other cases (4,3,2,1 - connecting piece(s))
 				if(b[i][j] == player){
 					tmp_connecting_pieces = 1;
-					// Begin counting connected pieces
-
 					// position 'i' has ATLEAST enough space for 5
 					if( i < board.size - 4 ){
 
@@ -204,7 +222,7 @@ public class Go_Board{
 							}
 						}
 						// Compare to final and change
-						if (tmp_connecting_pieces > final_connecting_pieces) final_connecting_pieces =tmp_connecting_pieces;
+						if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
 
 						if ( j < board.size - 4){
 							// 2) Check diagonally going down and ->	
@@ -218,7 +236,7 @@ public class Go_Board{
 								}
 							}
 							// Compare to final and change
-							if (tmp_connecting_pieces > final_connecting_pieces) final_connecting_pieces =tmp_connecting_pieces;
+							if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
 						}							
 					}
 
@@ -234,8 +252,8 @@ public class Go_Board{
 							}
 						}
 						// Compare to final and change
-						if (tmp_connecting_pieces > final_connecting_pieces) final_connecting_pieces =tmp_connecting_pieces;
-						if( i > 4){ //originally i > board.size-4
+						if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
+						if( i > 4){
 							// 4) Check diagonally going up and ->			
 							if( b[i-1][j+1] == player) {
 								tmp_connecting_pieces = 2;
@@ -247,39 +265,51 @@ public class Go_Board{
 								}
 							}
 							// Compare to final and change
-							if (tmp_connecting_pieces > final_connecting_pieces) final_connecting_pieces =tmp_connecting_pieces;	
+							if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;	
 						}
-					}
+					}	
+				}
+				// Update counts of connecting pieces
+				switch(tmp_connecting_pieces){
+					case 1: num_one_piece++; break;
+					case 2: num_two_piece++; break;
+					case 3: num_three_piece++; break;
+					case 4: num_four_piece++; break;
+					default: break;
 				}
 			}
 		}
-		// Translate connecting pieces to a value
-		switch(final_connecting_pieces){
+		// Translate to TOTAL connecting pieces to a value
+		switch(max_connecting_pieces){
 			case 0: val = 0; break;
 			case 1: val = 10; break;
 			case 2: val = 100; break;
 			case 3: val = 1000; break;
 			case 4: val = 10000; break;
+			default : val = 0;
 		}
-		return val;
+
+		// Consider number of sets
+		num_one_piece *= 10;
+		num_two_piece *= 100;
+		num_three_piece *= 1000;
+		num_four_piece *= 10000;
+		// Calculate heuristic val.
+		//System.out.println("Value of board is : "+ val + num_one_piece + num_two_piece + num_three_piece + num_four_piece);
+		return val + num_one_piece + num_two_piece + num_three_piece + num_four_piece;
 	}
 
 	// Mini-max Algorithm Implementation
 	// Given a board, return the best possible choice (i,j) using the mini-max alg.
 	// (i,j) is returned as an ArrayList<int>
-	
-	public int mini_max_choice(Go_Board board, int depth, int maximizing_player){
-		//System.out.println("executing mini_max_choice");
+	// NOTE: Implements alpha-beta pruning with min,max
+
+	public int mini_max_choice(Go_Board board, int depth, int maximizing_player, int max, int min){
 		int best_val = 0;
-		int max_score = board.value_of_board(board,maximizing_player);
-		int min_score = board.value_of_board(board, 2);
 
   		ArrayList<ArrayList<Integer>> possible_moves = new ArrayList<ArrayList<Integer>>();
   		possible_moves = board.list_of_possible_moves(board);
   		double depth_pow = Math.pow((double)10,(double)depth);
-  		// If maximizer/minimizer has won the game, return the eval score
-  		if(max_score == 100000) return (int)((double)max_score-depth_pow);
-  		if(min_score == 100000) return (int)(depth_pow-100000.0);
 
   		// base case: reached depth limit OR no more moves to make (tie, score = 0)
 		if( (depth == 0) || (possible_moves.size() == 0) ){
@@ -287,32 +317,35 @@ public class Go_Board{
 		}
 
   		if(maximizing_player == 1){
-  			best_val = -100000;
+  			best_val = min;
   			// traverse through each child of node (each possibility of board)
   			for(int i = 0; i < possible_moves.size() ; i++){
   				ArrayList<Integer> the_move = possible_moves.get(i);
-  				board.change_board(board, the_move.get(0), the_move.get(1), maximizing_player);
-  				int v = mini_max_choice(board, depth-1, 2);
+  				board.change_board(board, the_move.get(0), the_move.get(1), 1);
+  				int v = mini_max_choice(board, depth-1, 2, max, best_val);
   				best_val = Math.max(v,best_val);
-  				board.change_board(board, the_move.get(0), the_move.get(1), 0);
+  				board.change_board(board, the_move.get(0), the_move.get(1), 0); // undo change
+  				if (best_val > max) return max;
   			}
   			return best_val;
   		}
 
   		else{ // minimizing player
-  			best_val = 100000;
+  			best_val = max;
   			//traverse through each child of node
   			for(int i = 0; i < possible_moves.size() ; i++){
   				// make copy of board bc we don't want to alter master board
   				ArrayList<Integer> the_move = possible_moves.get(i);
-  				board.change_board(board, the_move.get(0), the_move.get(1), 2);
-  				int v = mini_max_choice(board, depth-1, 1);
+  				board.change_board(board, the_move.get(0), the_move.get(1), 2); //try move
+  				int v = mini_max_choice(board, depth-1, 1, best_val, min);
   				best_val = Math.min(v,best_val);
-  				board.change_board(board, the_move.get(0), the_move.get(1), 0);
+  				board.change_board(board, the_move.get(0), the_move.get(1), 0); //undo move
+  				if (best_val < min) return min;
   			}
   			return best_val;
   		}
 	}
+
 	
 	// Return coordinates (ArrayList<Integer>) of best available move via minimax
 	// best_move depth set to 2 (look 2 steps ahead)
@@ -325,19 +358,23 @@ public class Go_Board{
   		possible_moves = board.list_of_possible_moves(board);
   		best_move.add( (possible_moves.get(0)).get(0) ); // x-coordin
 		best_move.add( (possible_moves.get(0)).get(1) ); // y-coordin
-  		for(int i = 0; i < possible_moves.size(); i++){
+  		for(int i = 1; i < possible_moves.size(); i++){
  			ArrayList<Integer> the_move = possible_moves.get(i);
   			board.change_board(board, the_move.get(0), the_move.get(1), player); // find move
-  			int move_val = mini_max_choice(board, 3, player); // DEPTH = 3
+  			int move_val = mini_max_choice(board, 2, player, 100000, -100000); // CHANGE_DEPTH = 3
   			board.change_board(board, the_move.get(0), the_move.get(1), 0); // undo move
   			if( move_val > best_val){
   				best_move.set(0, the_move.get(0));
   				best_move.set(1, the_move.get(1));
   				best_val = move_val;
-  				System.out.println("@@@@@@@best move has changed, value is :" + best_val + " 	@@@@@@@@@");
+  				System.out.println("Best move has changed, value is :" + best_val);
+  			}
+  			if (best_val == 100000){
+  				System.out.println(" * Game-winning move found: " + best_move.get(0) + " , " + best_move.get(1));
+  				break;
   			}
   		}
-		System.out.println("Best move is : " + best_move.get(0) + "," + best_move.get(1));
+		System.out.println("Chosen best move is : " + best_move.get(0) + "," + best_move.get(1));
 		return best_move;
 	}
 
@@ -411,52 +448,65 @@ public class Go_Board{
 	}
 
 	public static void main(String[] args){
-		int size = 5;
+		int size = 7;
 		Go_Board board = new Go_Board(size);
         Scanner scanner = new Scanner(System.in);
         String move = "";
         Boolean player_won = false;
         Boolean computer_won = false;
+        board.print_board(board);
      
         // Program terminates at "quit" in CLI
         for(int i = 1; i < board.size*board.size; i++){
         	//Begin playing here
+        	ArrayList<ArrayList<Integer>> possible_moves = new ArrayList<ArrayList<Integer>>();
+  			possible_moves = board.list_of_possible_moves(board);
+  			if(possible_moves.size() == 0){
+  				System.out.println("No more spaces left, game has tied");
+  				return;
+  			}
         	System.out.println("-----------");
         	System.out.println("Turn #: " + ((Integer)i).toString());
         	System.out.println("");
-        	board.print_board(board);
-        	System.out.println("");
-    		player_won = board.is_winning_board(board,1);
-    		computer_won = board.is_winning_board(board,2);
-    		if(player_won){
-    			System.out.println("Player wins!");
-    			board.print_board(board);
-    			return;
-    		}
-    		if(computer_won){
-    			System.out.println("Computer wins!");
-    			board.print_board(board);
-    			return;
-    		}
+
+        	// BEGIN HUMAN TURN
         	System.out.println("Enter a move: ");
         	move = scanner.nextLine();
 
-        	// @@@ BEGIN CLI COMMAND TESTING
-        	if(move.equals("quit")){
-        		return;
+        	while( board.is_valid_move(move) == false){
+        		if(move.equals("quit")) return;
+        		if(move.equals("moves")){
+        			possible_moves = board.list_of_possible_moves(board);
+        			System.out.println(possible_moves);
+        			scanner.nextLine();
+        		}
+        		if(move.equals("value")){
+        			int val = board.value_of_board(board,1);
+        			System.out.println("Board value is : " + val);
+        			move = scanner.nextLine();
+        		}
+        		else{
+	        		System.out.println("Invalid move, try again.");
+	        		System.out.println("Enter a move: ");
+	        		move = scanner.nextLine();        			
+        		}
         	}
-        	if(move.equals("value")){
-        		int val = board.value_of_board(board,1);
-        		System.out.println("Board value is : " + val);
-        		return;
-        	}
+
 
 
         	int first_char_int_val = board.alpha_row_to_int(move.charAt(0)) - 1;
         	int second_char_int_val = Character.getNumericValue(move.charAt(1)) - 1;
+        	// check if move exists already
+        	if (board.does_move_exist(board, first_char_int_val+1, second_char_int_val+1 ) == true){
+        		System.out.println("Invalid move: Move exists already, try again.");
+        		System.out.println("Enter a move: ");
+        		move = scanner.nextLine();
+        	}
         	board.change_board(board, first_char_int_val, second_char_int_val, 1);
-
-        	// Computer's turn (rep'd by 2 on board)
+        	board.print_board(board);
+        	System.out.println("Move played: " + move.charAt(0) + Character.getNumericValue(move.charAt(1)) );
+        	
+        	// Check if human made game-changing move
     		player_won = board.is_winning_board(board,1);
     		computer_won = board.is_winning_board(board,2);
     		if(player_won){
@@ -469,25 +519,37 @@ public class Go_Board{
     			board.print_board(board);
     			return;
     		}
-			ArrayList<ArrayList<Integer>> possible_moves = new ArrayList<ArrayList<Integer>>();
-  			possible_moves = board.list_of_possible_moves(board);
-  			// Calculate best possible move to be made
   			if (possible_moves.size() == 0){
   				board.print_board(board);
   				System.out.println("No more moves, game is tied.");
   				return;
   			}
-
+			// BEGIN Computer's turn (rep'd by L(2) on board)
         	ArrayList<Integer> comp_move = new ArrayList<Integer>();
+
+
+        	// Count time
+        	System.out.println("Computer is deciding next move...");
         	comp_move = board.find_best_move(board,2);
         	// Make decision
         	board.change_board(board, comp_move.get(0), comp_move.get(1), 2);
         	// Print board
         	board.print_board(board);
         	String comp_row = board.int_to_alpha_row(comp_move.get(0));
-        	System.out.println("Move played: " + comp_row + comp_move.get(1));
+        	System.out.println("Move played: " + comp_row + (comp_move.get(1)+1));
+        	player_won = board.is_winning_board(board,1);
+    		computer_won = board.is_winning_board(board,2);
+    		if(player_won){
+    			System.out.println("Player wins!");
+    			board.print_board(board);
+    			return;
+    		}
+    		if(computer_won){
+    			System.out.println("Computer wins!");
+    			board.print_board(board);
+    			return;
+    		}
         }
-        System.out.println("Game has tied.");
         return;
 	}
 }
