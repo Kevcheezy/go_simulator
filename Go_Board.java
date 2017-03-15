@@ -391,7 +391,7 @@ public class Go_Board{
   		for(int i = 0; i < possible_moves.size(); i++){
  			ArrayList<Integer> the_move = possible_moves.get(i);
   			board.change_board(board, the_move.get(0), the_move.get(1), player); // find move
-  			int move_val = mini_max_choice(board, 3, player, 100000, -100000); // CHANGE_DEPTH = 3
+  			int move_val = mini_max_choice(board, 2, player, 100000, -100000); // CHANGE_DEPTH = 3
   			board.change_board(board, the_move.get(0), the_move.get(1), 0); // undo move
   			if( move_val > best_val){
   				best_move.set(0, the_move.get(0));
@@ -521,9 +521,6 @@ public class Go_Board{
 	        		move = scanner.nextLine();        			
         		}
         	}
-
-
-
         	int first_char_int_val = board.alpha_row_to_int(move.charAt(0)) - 1;
         	int second_char_int_val = Character.getNumericValue(move.charAt(1)) - 1;
         	// check if move exists already
@@ -554,19 +551,37 @@ public class Go_Board{
   				System.out.println("No more moves, game is tied.");
   				return;
   			}
+
+
+  			i++;
 			// BEGIN Computer's turn (rep'd by L(2) on board)
         	ArrayList<Integer> comp_move = new ArrayList<Integer>();
-
-
-        	// Count time
         	System.out.println("Computer is deciding next move...");
-        	comp_move = board.find_best_move(board,2);
-        	// Make decision
-        	board.change_board(board, comp_move.get(0), comp_move.get(1), 2);
-        	// Print board
-        	board.print_board(board);
-        	String comp_row = board.int_to_alpha_row(comp_move.get(0));
-        	System.out.println("Move played: " + comp_row + (comp_move.get(1)+1));
+
+        	if(i == 2){
+        		if(board.does_move_exist(board, (size/2+1), (size/2)+1) == true){
+        			board.change_board(board, (size/2)+1, (size/2)+1,2);
+		        	// Print board
+		        	board.print_board(board);
+		        	System.out.println("Move played: " + board.last_move);
+        		}
+        		else{
+        			board.change_board(board, (size/2)+2, (size/2)+1,2);
+		        	// Print board
+		        	board.print_board(board);
+		        	System.out.println("Move played: " + board.last_move);
+        		}
+        	}
+        	// Count time
+   			else{
+	        	comp_move = board.find_best_move(board,2);
+	        	// Make decision
+	        	board.change_board(board, comp_move.get(0), comp_move.get(1), 2);
+	        	// Print board
+	        	board.print_board(board);
+	        	String comp_row = board.int_to_alpha_row(comp_move.get(0));
+	        	System.out.println("Move played: " + comp_row + (comp_move.get(1)+1));
+   			}
         	player_won = board.is_winning_board(board,1);
     		computer_won = board.is_winning_board(board,2);
     		if(player_won){
