@@ -8,16 +8,6 @@ public class Go_Board{
 	String last_move = "first move";
 
 	// Constructor
-	public Go_Board(){
-		size = 11;
-		elements = new int[size][size];
-		for(int i = 0; i < size; i++){
-			for(int j = 0; j < size; j++){
-				elements[i][j] = 0;
-			}
-		}
-	}
-	// Overloaded Constructor
 	public Go_Board(int s){
 		size = s;
 		elements = new int[size][size];
@@ -26,12 +16,6 @@ public class Go_Board{
 				elements[i][j] = 0;
 			}
 		}
-	}
-
-	// Copy Constructor
-	public Go_Board(Go_Board board){
-		size = board.size;
-		elements = board.elements;
 	}
 
 	public int[][] get_elements(){
@@ -205,12 +189,23 @@ public class Go_Board{
 				tmp_connecting_pieces = 0; // reset
 				// check if board is winning board, if so, return max val
 				winning = board.is_winning_board(board, player);
-				if(winning == true) return val = 100000;
+				if(winning == true) return val = 10000000;
 				if(b[i][j] == player){
 					tmp_connecting_pieces = 1;
 					// position 'i' has ATLEAST enough space for 5
 					if( i < board.size - 4 ){
-
+						/*
+						if(i > 0){
+							// 4 in a row unblocked  -- vertically going down
+							if( (b[i+1][j] == player) &&
+								(b[i+2][j] == player) &&
+								(b[i+3][j] == player) &&
+								(b[i-1][j] == 0) &&
+								(b[i+4][j] == 0) ){
+								return 10000000; // winning board
+							}
+						}
+						*/
 						// 1) Check vertically going down
 						if( b[i+1][j] == player ){
 							tmp_connecting_pieces = 2;
@@ -220,11 +215,23 @@ public class Go_Board{
 									tmp_connecting_pieces = 4;
 								}
 							}
+							// Compare to final and change
+							if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
 						}
-						// Compare to final and change
-						if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
 
 						if ( j < board.size - 4){
+							/*
+							if(i > 1 && j > 3){
+							// 4 in a row unblocked -- diagonally going down and -->
+								if( (b[i+1][j+1] == player) &&
+									(b[i+2][j+2] == player) &&
+									(b[i+3][j+3] == player) &&
+									(b[i-1][j-1] == 0) &&
+									(b[i+4][j-4] == 0) ){
+									return 10000000;
+								}
+							}
+							*/
 							// 2) Check diagonally going down and ->	
 							if( b[i+1][j+1] == player){
 								tmp_connecting_pieces = 2;
@@ -234,13 +241,25 @@ public class Go_Board{
 										tmp_connecting_pieces = 4;
 									}
 								}
+								// Compare to final and change
+								if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
 							}
-							// Compare to final and change
-							if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
 						}							
 					}
 
 					if ( j < board.size - 4){
+						/*
+						// 4 in a row unblocked -- going -->
+						if(j > 0){
+							if( (b[i][j+1] == player) &&
+								(b[i][j+2] == player) &&
+								(b[i][j+3] == player) &&
+								(b[i][j-1] == 0) &&
+								(b[i][j+4] == 0) ){
+								return 10000000;
+							}
+						}
+						*/
 						// 3) Check horizontal going ->
 						if( b[i][j+1] == player ){
 							tmp_connecting_pieces = 2;
@@ -250,10 +269,23 @@ public class Go_Board{
 									tmp_connecting_pieces = 4;
 								}
 							}
+							// Compare to final and change
+							if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
 						}
-						// Compare to final and change
-						if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;
+					
 						if( i > 4){
+							/*
+							if(i > 3 && j > 0){
+							// 4 in a row unblocked -- diagonally going up and -->
+								if( (b[i-1][j+1] == player) &&
+									(b[i-2][j+2] == player) &&
+									(b[i-3][j+3] == player) &&
+									(b[i+1][j-1] == 0) &&
+									(b[i-4][j+4] == 0) ){
+									return 10000000;
+								}
+							}
+							*/
 							// 4) Check diagonally going up and ->			
 							if( b[i-1][j+1] == player) {
 								tmp_connecting_pieces = 2;
@@ -263,9 +295,9 @@ public class Go_Board{
 										tmp_connecting_pieces = 4;
 									}
 								}
+								// Compare to final and change
+								if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;	
 							}
-							// Compare to final and change
-							if (tmp_connecting_pieces > max_connecting_pieces) max_connecting_pieces =tmp_connecting_pieces;	
 						}
 					}	
 				}
@@ -296,7 +328,7 @@ public class Go_Board{
 		num_four_piece *= 10000;
 		// Calculate heuristic val.
 		//System.out.println("Value of board is : "+ val + num_one_piece + num_two_piece + num_three_piece + num_four_piece);
-		return val + num_one_piece + num_two_piece + num_three_piece + num_four_piece;
+		return val ;//+ num_one_piece + num_two_piece + num_three_piece + num_four_piece;
 	}
 
 	// Mini-max Algorithm Implementation
@@ -317,7 +349,7 @@ public class Go_Board{
 		}
 
   		if(maximizing_player == 1){
-  			best_val = min;
+  			best_val = -100000;//min;
   			// traverse through each child of node (each possibility of board)
   			for(int i = 0; i < possible_moves.size() ; i++){
   				ArrayList<Integer> the_move = possible_moves.get(i);
@@ -325,13 +357,13 @@ public class Go_Board{
   				int v = mini_max_choice(board, depth-1, 2, max, best_val);
   				best_val = Math.max(v,best_val);
   				board.change_board(board, the_move.get(0), the_move.get(1), 0); // undo change
-  				if (best_val > max) return max;
+  				//if (best_val > max) return max;
   			}
   			return best_val;
   		}
 
   		else{ // minimizing player
-  			best_val = max;
+  			best_val = 100000;//max;
   			//traverse through each child of node
   			for(int i = 0; i < possible_moves.size() ; i++){
   				// make copy of board bc we don't want to alter master board
@@ -340,7 +372,7 @@ public class Go_Board{
   				int v = mini_max_choice(board, depth-1, 1, best_val, min);
   				best_val = Math.min(v,best_val);
   				board.change_board(board, the_move.get(0), the_move.get(1), 0); //undo move
-  				if (best_val < min) return min;
+  				//if (best_val < min) return min;
   			}
   			return best_val;
   		}
@@ -358,7 +390,7 @@ public class Go_Board{
   		possible_moves = board.list_of_possible_moves(board);
   		best_move.add( (possible_moves.get(0)).get(0) ); // x-coordin
 		best_move.add( (possible_moves.get(0)).get(1) ); // y-coordin
-  		for(int i = 1; i < possible_moves.size(); i++){
+  		for(int i = 0; i < possible_moves.size(); i++){
  			ArrayList<Integer> the_move = possible_moves.get(i);
   			board.change_board(board, the_move.get(0), the_move.get(1), player); // find move
   			int move_val = mini_max_choice(board, 2, player, 100000, -100000); // CHANGE_DEPTH = 3
@@ -374,7 +406,6 @@ public class Go_Board{
   				break;
   			}
   		}
-		System.out.println("Chosen best move is : " + best_move.get(0) + "," + best_move.get(1));
 		return best_move;
 	}
 
@@ -400,12 +431,13 @@ public class Go_Board{
 		Boolean victory = false;
 		for(int i = 0; i < board.size; i++){
 			for(int j = 0; j < board.size; j++){
-				// Make sure the answer fits onto the board and we don't segfault
 				// Checking conditions for 1
 				if(b[i][j]==player){
+					// Check for 4 in a row unblocked on each side
+					// &&
+					// Check for 5 in a row
 					// position 'i' has ATLEAST enough space for 5
 					if( i < board.size - 4 ){
-
 						// 1) Check vertically going down
 						if( (b[i+1][j] == player) && 
 							(b[i+2][j] == player) &&
@@ -447,8 +479,8 @@ public class Go_Board{
 		return victory;
 	}
 
-	public static void main(String[] args){
-		int size = 7;
+	public static void human_is_dark(int size){	
+		System.out.println("Human is DARK");
 		Go_Board board = new Go_Board(size);
         Scanner scanner = new Scanner(System.in);
         String move = "";
@@ -478,7 +510,7 @@ public class Go_Board{
         		if(move.equals("moves")){
         			possible_moves = board.list_of_possible_moves(board);
         			System.out.println(possible_moves);
-        			scanner.nextLine();
+        			move = scanner.nextLine();
         		}
         		if(move.equals("value")){
         			int val = board.value_of_board(board,1);
@@ -551,5 +583,132 @@ public class Go_Board{
     		}
         }
         return;
+	}
+		// COM goes first
+		public static void human_is_light(int size){	
+		System.out.println("Human is LIGHT");
+		Go_Board board = new Go_Board(size);
+	    Scanner scanner = new Scanner(System.in);
+	    String move = "";
+	    Boolean player_won = false;
+	    Boolean computer_won = false;
+	    board.print_board(board);
+	 
+	    // Program terminates at "quit" in CLI
+	    for(int i = 1; i < board.size*board.size; i++){
+	    	//Begin playing here
+	    	ArrayList<ArrayList<Integer>> possible_moves = new ArrayList<ArrayList<Integer>>();
+				possible_moves = board.list_of_possible_moves(board);
+				if(possible_moves.size() == 0){
+					System.out.println("No more spaces left, game has tied");
+					return;
+				}
+	    	System.out.println("-----------");
+	    	System.out.println("Turn #: " + ((Integer)i).toString());
+	    	System.out.println("");
+
+			// BEGIN Computer's turn (rep'd by L(2) on board)
+	    	ArrayList<Integer> comp_move = new ArrayList<Integer>();
+	    	System.out.println("Computer is deciding next move...");
+	    	comp_move = board.find_best_move(board,2);
+	    	// Make decision
+	    	board.change_board(board, comp_move.get(0), comp_move.get(1), 2);
+	    	// Print board
+	    	board.print_board(board);
+	    	String comp_row = board.int_to_alpha_row(comp_move.get(0));
+	    	System.out.println("Move played: " + comp_row + (comp_move.get(1)+1));
+	    	player_won = board.is_winning_board(board,1);
+			computer_won = board.is_winning_board(board,2);
+			if(player_won){
+				System.out.println("Player wins!");
+				board.print_board(board);
+				return;
+			}
+			if(computer_won){
+				System.out.println("Computer wins!");
+				board.print_board(board);
+				return;
+			}
+
+
+	    	// BEGIN HUMAN TURN
+	    	System.out.println("Enter a move: ");
+	    	move = scanner.nextLine();
+
+	    	while( board.is_valid_move(move) == false){
+	    		if(move.equals("quit")) return;
+	    		if(move.equals("moves")){
+	    			possible_moves = board.list_of_possible_moves(board);
+	    			System.out.println(possible_moves);
+	    			move = scanner.nextLine();
+	    		}
+	    		if(move.equals("value")){
+	    			int val = board.value_of_board(board,1);
+	    			System.out.println("Board value is : " + val);
+	    			move = scanner.nextLine();
+	    		}
+	    		else{
+	        		System.out.println("Invalid move, try again.");
+	        		System.out.println("Enter a move: ");
+	        		move = scanner.nextLine();        			
+	    		}
+	    	}
+
+
+
+	    	int first_char_int_val = board.alpha_row_to_int(move.charAt(0)) - 1;
+	    	int second_char_int_val = Character.getNumericValue(move.charAt(1)) - 1;
+	    	// check if move exists already
+	    	if (board.does_move_exist(board, first_char_int_val+1, second_char_int_val+1 ) == true){
+	    		System.out.println("Invalid move: Move exists already, try again.");
+	    		System.out.println("Enter a move: ");
+	    		move = scanner.nextLine();
+	    	}
+	    	board.change_board(board, first_char_int_val, second_char_int_val, 1);
+	    	board.print_board(board);
+	    	System.out.println("Move played: " + move.charAt(0) + Character.getNumericValue(move.charAt(1)) );
+	    	
+	    	// Check if human made game-changing move
+			player_won = board.is_winning_board(board,1);
+			computer_won = board.is_winning_board(board,2);
+			if(player_won){
+				System.out.println("Player wins!");
+				board.print_board(board);
+				return;
+			}
+			if(computer_won){
+				System.out.println("Computer wins!");
+				board.print_board(board);
+				return;
+			}
+				if (possible_moves.size() == 0){
+					board.print_board(board);
+					System.out.println("No more moves, game is tied.");
+					return;
+				}
+	    }
+	    return;
+	}
+
+	public static void main(String[] args){
+		Boolean flag_human_is_light = false;
+		int size = 11;
+		for (int i = 0; i < args.length ; i++){
+			switch (args[i]){
+				case "-l":
+					flag_human_is_light = true;
+					break;
+				case "-n":
+					size = Integer.parseInt(args[i+1]);
+					break;
+			}
+		}
+		if(flag_human_is_light){
+			human_is_light(size);
+		}
+		else{
+			human_is_dark(size);
+		}
+		return;
 	}
 }
