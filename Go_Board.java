@@ -204,8 +204,8 @@ public class Go_Board{
 								(b[i+4][j] == 0) ){
 								return 10000000; // winning board
 							}
-						}
-						*/
+						}*/
+						
 						// 1) Check vertically going down
 						if( b[i+1][j] == player ){
 							tmp_connecting_pieces = 2;
@@ -230,8 +230,8 @@ public class Go_Board{
 									(b[i+4][j-4] == 0) ){
 									return 10000000;
 								}
-							}
-							*/
+							}*/
+							
 							// 2) Check diagonally going down and ->	
 							if( b[i+1][j+1] == player){
 								tmp_connecting_pieces = 2;
@@ -320,15 +320,13 @@ public class Go_Board{
 			case 4: val = 10000; break;
 			default : val = 0;
 		}
-
 		// Consider number of sets
 		num_one_piece *= 10;
 		num_two_piece *= 100;
 		num_three_piece *= 1000;
 		num_four_piece *= 10000;
 		// Calculate heuristic val.
-		//System.out.println("Value of board is : "+ val + num_one_piece + num_two_piece + num_three_piece + num_four_piece);
-		return val ;//+ num_one_piece + num_two_piece + num_three_piece + num_four_piece;
+		return val + num_one_piece + num_two_piece + num_three_piece + num_four_piece;
 	}
 
 	// Mini-max Algorithm Implementation
@@ -341,7 +339,7 @@ public class Go_Board{
 
   		ArrayList<ArrayList<Integer>> possible_moves = new ArrayList<ArrayList<Integer>>();
   		possible_moves = board.list_of_possible_moves(board);
-  		double depth_pow = Math.pow((double)10,(double)depth);
+  		//double depth_pow = Math.pow((double)10,(double)depth);
 
   		// base case: reached depth limit OR no more moves to make (tie, score = 0)
 		if( (depth == 0) || (possible_moves.size() == 0) ){
@@ -349,7 +347,7 @@ public class Go_Board{
 		}
 
   		if(maximizing_player == 1){
-  			best_val = -100000;//min;
+  			best_val = -100000;
   			// traverse through each child of node (each possibility of board)
   			for(int i = 0; i < possible_moves.size() ; i++){
   				ArrayList<Integer> the_move = possible_moves.get(i);
@@ -363,7 +361,7 @@ public class Go_Board{
   		}
 
   		else{ // minimizing player
-  			best_val = 100000;//max;
+  			best_val = 100000;
   			//traverse through each child of node
   			for(int i = 0; i < possible_moves.size() ; i++){
   				// make copy of board bc we don't want to alter master board
@@ -393,7 +391,7 @@ public class Go_Board{
   		for(int i = 0; i < possible_moves.size(); i++){
  			ArrayList<Integer> the_move = possible_moves.get(i);
   			board.change_board(board, the_move.get(0), the_move.get(1), player); // find move
-  			int move_val = mini_max_choice(board, 2, player, 100000, -100000); // CHANGE_DEPTH = 3
+  			int move_val = mini_max_choice(board, 3, player, 100000, -100000); // CHANGE_DEPTH = 3
   			board.change_board(board, the_move.get(0), the_move.get(1), 0); // undo move
   			if( move_val > best_val){
   				best_move.set(0, the_move.get(0));
@@ -598,36 +596,47 @@ public class Go_Board{
 	    for(int i = 1; i < board.size*board.size; i++){
 	    	//Begin playing here
 	    	ArrayList<ArrayList<Integer>> possible_moves = new ArrayList<ArrayList<Integer>>();
-				possible_moves = board.list_of_possible_moves(board);
-				if(possible_moves.size() == 0){
-					System.out.println("No more spaces left, game has tied");
-					return;
-				}
-	    	System.out.println("-----------");
-	    	System.out.println("Turn #: " + ((Integer)i).toString());
-	    	System.out.println("");
-
-			// BEGIN Computer's turn (rep'd by L(2) on board)
-	    	ArrayList<Integer> comp_move = new ArrayList<Integer>();
-	    	System.out.println("Computer is deciding next move...");
-	    	comp_move = board.find_best_move(board,2);
-	    	// Make decision
-	    	board.change_board(board, comp_move.get(0), comp_move.get(1), 2);
-	    	// Print board
-	    	board.print_board(board);
-	    	String comp_row = board.int_to_alpha_row(comp_move.get(0));
-	    	System.out.println("Move played: " + comp_row + (comp_move.get(1)+1));
-	    	player_won = board.is_winning_board(board,1);
-			computer_won = board.is_winning_board(board,2);
-			if(player_won){
-				System.out.println("Player wins!");
-				board.print_board(board);
+			possible_moves = board.list_of_possible_moves(board);
+			if(possible_moves.size() == 0){
+				System.out.println("No more spaces left, game has tied");
 				return;
 			}
-			if(computer_won){
-				System.out.println("Computer wins!");
-				board.print_board(board);
-				return;
+			// Computer's first turn
+			if(i == 1) {
+		    	System.out.println("-----------");
+		    	System.out.println("Turn #: " + ((Integer)i).toString());
+		    	System.out.println("");
+		    	board.change_board(board, (size/2)-1, (size/2)-1, 2);
+		    	board.print_board(board);
+		    	System.out.println("Move played: " + board.int_to_alpha_row(size/2) + ((size/2)-1));
+			}
+			else{
+		    	System.out.println("-----------");
+		    	System.out.println("Turn #: " + ((Integer)i).toString());
+		    	System.out.println("");
+
+				// BEGIN Computer's turn (rep'd by L(2) on board)
+		    	ArrayList<Integer> comp_move = new ArrayList<Integer>();
+		    	System.out.println("Computer is deciding next move...");
+		    	comp_move = board.find_best_move(board,2);
+		    	// Make decision
+		    	board.change_board(board, comp_move.get(0), comp_move.get(1), 2);
+		    	// Print board
+		    	board.print_board(board);
+		    	String comp_row = board.int_to_alpha_row(comp_move.get(0));
+		    	System.out.println("Move played: " + comp_row + (comp_move.get(1)+1));
+		    	player_won = board.is_winning_board(board,1);
+				computer_won = board.is_winning_board(board,2);
+				if(player_won){
+					System.out.println("Player wins!");
+					board.print_board(board);
+					return;
+				}
+				if(computer_won){
+					System.out.println("Computer wins!");
+					board.print_board(board);
+					return;
+				}
 			}
 
 
